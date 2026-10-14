@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>قسط - إدارة التقسيط</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ============ شاشة البداية ============ -->
+<div id="splash-screen" class="screen active">
+  <div class="splash-content">
+    <div class="splash-icon">📋</div>
+    <h1>قسط</h1>
+    <p>إدارة التقسيط بطريقة سهلة</p>
+  </div>
+</div>
+
+<!-- ============ شاشة تسجيل الدخول ============ -->
+<div id="login-screen" class="screen">
+  <div class="login-header">
+    <div class="login-logo">ق</div>
+    <h1 class="login-title">قسط</h1>
+    <p class="login-subtitle">إدارة التقسيط بطريقة سهلة</p>
+  </div>
+
+  <div class="login-card">
+    <h2 class="login-welcome">مرحبًا بك</h2>
+    <p class="login-hint">اختر نوع حسابك</p>
+
+    <div class="role-switch">
+      <button class="role-btn" id="role-customer" onclick="selectRole('customer')">
+        <span>👤</span> عميل
+      </button>
+      <button class="role-btn active" id="role-merchant" onclick="selectRole('merchant')">
+        <span>🏪</span> مقسط
+      </button>
+    </div>
+
+    <div class="field-wrap">
+      <input type="text" id="login-name" class="login-input" placeholder="الاسم أو رقم الهاتف" autocomplete="username" />
+    </div>
+
+    <div class="field-wrap">
+      <input type="password" id="login-password" class="login-input" placeholder="كلمة المرور" autocomplete="current-password" />
+      <button type="button" class="eye-btn" onclick="togglePassword()">👁️</button>
+    </div>
+
+    <p id="login-error" class="login-error"></p>
+
+    <button class="login-submit" onclick="doLogin()">تسجيل الدخول</button>
+
+    <button type="button" class="btn-pin-login" id="btn-bio-login" onclick="loginWithBiometric()" style="display:none;">
+      👆 دخول بالبصمة
+    </button>
+
+    <button type="button" class="btn-pin-login" id="btn-pin-login" onclick="openPINLoginModal()" style="display:none;">
+      🔒 دخول سريع بـ PIN
+    </button>
+
+    <p class="login-footer">
+      ليس لديك حساب؟
+      <a href="javascript:void(0)" onclick="goToRegister()">إنشاء حساب جديد</a>
+    </p>
+
+    <p class="login-version">نسخة تجريبية</p>
+  </div>
+
+  <button class="admin-link" onclick="goToLogin('admin')">⚙️ دخول كأدمن</button>
+  <button class="theme-toggle-floating" onclick="toggleTheme()">🌓</button>
+</div>
+
+<!-- ============ تسجيل مقسط ============ -->
+<div id="register-merchant-screen" class="screen">
+  <div class="container">
+    <div class="topbar">
+      <button class="back-btn" onclick="showScreen('login-screen')">←</button>
+      <h3>تسجيل مقسط جديد</h3>
+    </div>
+    <input type="text" id="reg-merchant-name" placeholder="اسم المستخدم" class="input" />
+    <input type="password" id="reg-merchant-password" placeholder="كلمة المرور" class="input" />
+    <input type="password" id="reg-merchant-confirm" placeholder="تأكيد كلمة المرور" class="input" />
+    <p id="reg-merchant-error" class="error"></p>
+    <button class="btn btn-primary" onclick="registerMerchant()">تسجيل</button>
+    <p style="text-align:center;font-size:12px;color:var(--gray-text);margin-top:8px;">
+      بعد التسجيل ستُطلب منك إكمال بيانات المحل
+    </p>
+  </div>
+</div>
+
+<!-- ============ تسجيل زبون ============ -->
+<div id="register-customer-screen" class="screen">
+  <div class="container">
+    <div class="topbar">
+      <button class="back-btn" onclick="showScreen('login-screen')">←</button>
+      <h3>تسجيل زبون جديد</h3>
+    </div>
+    <input type="text" id="reg-customer-name" placeholder="اسم الزبون" class="input" />
+    <input type="password" id="reg-customer-password" placeholder="كلمة المرور" class="input" />
+    <input type="password" id="reg-customer-confirm" placeholder="تأكيد كلمة المرور" class="input" />
+    <p id="reg-customer-error" class="error"></p>
+    <button class="btn btn-primary" onclick="registerCustomer()">تسجيل</button>
+  </div>
+</div>
+
+<!-- ============ لوحة المقسط ============ -->
+<div id="merchant-dashboard" class="screen has-bottom-nav">
+  <div class="appbar">
+    <span id="merchant-welcome">مرحبًا</span>
+    <button class="logout-btn" onclick="logout()">خروج</button>
+  </div>
+  <div class="container">
+    <div id="merchant-profile-alert" class="profile-alert" onclick="openMerchantProfile()" style="display:none;">
+      <span class="profile-alert-icon">⚠️</span>
+      <span style="flex:1;">أكمل بيانات محلك ليراك العملاء</span>
+      <span style="font-weight:900;">›</span>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card" onclick="openCustomers()">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">العملاء</div>
+        <div class="stat-value" id="stat-customers">0</div>
+      </div>
+      <div class="stat-card" onclick="openContracts()">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">عقود نشطة</div>
+        <div class="stat-value" id="stat-active">0</div>
+      </div>
+      <div class="stat-card" onclick="openCollaterals()">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">المتبقي</div>
+        <div class="stat-value" id="stat-remaining">0</div>
+      </div>
+      <div class="stat-card" onclick="openTraders()">
+        <div class="stat-icon">📅</div>
+        <div class="stat-label">أقساط اليوم</div>
+        <div class="stat-value" id="stat-due">0</div>
+      </div>
+      <div class="stat-card stat-card-wide" onclick="openMerchantProfile()">
+        <div class="stat-icon">🏪</div>
+        <div class="stat-label">بروفايل المحل</div>
+        <div class="stat-value" style="font-size:13px;">اضغط للتعديل</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">الرئيسية</span>
+    </button>
+    <button class="nav-tab" onclick="openFileScreen()">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">الملف</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ بروفايل المقسط (تعديل) ============ -->
+<div id="merchant-profile-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('merchant-dashboard')">←</button>
+    <span>بروفايل المحل</span>
+  </div>
+  <div class="container">
+    <label class="label">اسم المحل / المقسط *</label>
+    <input type="text" id="mp-shop-name" class="input" placeholder="مثال: مؤسسة النور للتقسيط" />
+
+    <label class="label">رقم الهاتف / الواتساب *</label>
+    <input type="tel" id="mp-phone" class="input" placeholder="مثال: 967771234567" />
+
+    <label class="label">العنوان *</label>
+    <input type="text" id="mp-address" class="input" placeholder="مثال: صنعاء - شارع الزبيري" />
+
+    <label class="label">مجالات التقسيط *</label>
+    <p style="font-size:12px;color:var(--gray-text);margin-bottom:8px;">
+      اختر المجالات التي تعمل بها (يمكن اختيار أكثر من مجال)
+    </p>
+    <div class="checkbox-grid" id="mp-sectors">
+      <label class="checkbox-item" data-value="phones">
+        <span class="checkbox-check">✓</span>
+        <span>📱 جوالات</span>
+      </label>
+      <label class="checkbox-item" data-value="systems">
+        <span class="checkbox-check">✓</span>
+        <span>🖥️ منظومات</span>
+      </label>
+      <label class="checkbox-item" data-value="ac">
+        <span class="checkbox-check">✓</span>
+        <span>❄️ مكيفات</span>
+      </label>
+      <label class="checkbox-item" data-value="cars">
+        <span class="checkbox-check">✓</span>
+        <span>🚗 سيارات</span>
+      </label>
+    </div>
+
+    <label class="label">الحد الأقصى للتقسيط *</label>
+    <input type="number" id="mp-max-amount" class="input" placeholder="مثال: 1000000" />
+
+    <label class="label">مدة التقسيط المتاحة *</label>
+    <div class="checkbox-grid" id="mp-durations">
+      <label class="checkbox-item" data-value="daily">
+        <span class="checkbox-check">✓</span>
+        <span>📅 يومي</span>
+      </label>
+      <label class="checkbox-item" data-value="weekly">
+        <span class="checkbox-check">✓</span>
+        <span>📆 أسبوعي</span>
+      </label>
+      <label class="checkbox-item" data-value="monthly">
+        <span class="checkbox-check">✓</span>
+        <span>🗓️ شهري</span>
+      </label>
+      <label class="checkbox-item" data-value="yearly">
+        <span class="checkbox-check">✓</span>
+        <span>📅 سنوي</span>
+      </label>
+    </div>
+
+    <label class="label">هل تقبل ضمانات؟</label>
+    <div class="checkbox-grid">
+      <label class="checkbox-item" id="mp-collateral-yes" onclick="toggleCollateral(true)">
+        <span class="checkbox-check">✓</span>
+        <span>✅ نعم</span>
+      </label>
+      <label class="checkbox-item" id="mp-collateral-no" onclick="toggleCollateral(false)">
+        <span class="checkbox-check">✓</span>
+        <span>❌ لا</span>
+      </label>
+    </div>
+
+    <div id="mp-collateral-types-wrap" style="display:none;">
+      <label class="label">أنواع الضمانات المقبولة</label>
+      <input type="text" id="mp-collateral-types" class="input" placeholder="مثال: سيارة، منزل، ذهب" />
+    </div>
+
+    <label class="label">هل تحتاج كفيل؟</label>
+    <div class="checkbox-grid">
+      <label class="checkbox-item" id="mp-guarantor-yes" onclick="toggleGuarantor(true)">
+        <span class="checkbox-check">✓</span>
+        <span>✅ نعم</span>
+      </label>
+      <label class="checkbox-item" id="mp-guarantor-no" onclick="toggleGuarantor(false)">
+        <span class="checkbox-check">✓</span>
+        <span>❌ لا</span>
+      </label>
+    </div>
+
+    <label class="label">شروط / ملاحظات إضافية</label>
+    <textarea id="mp-notes" class="input" rows="3" placeholder="مثال: لا نقبل إلا العميل المعروف، الحد الأدنى 50 ألف..."></textarea>
+
+    <p id="mp-error" class="error"></p>
+    <button class="btn btn-primary" onclick="saveMerchantProfile()">حفظ البروفايل</button>
+  </div>
+</div>
+
+<!-- العملاء -->
+<div id="customers-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('merchant-dashboard')">←</button>
+    <span>العملاء</span>
+    <button class="add-btn" onclick="addCustomerDialog()">+</button>
+  </div>
+  <div class="container"><div id="customers-list"></div></div>
+</div>
+
+<!-- العقود -->
+<div id="contracts-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('merchant-dashboard')">←</button>
+    <span>العقود</span>
+    <button class="add-btn" onclick="openCreateContract()">+</button>
+  </div>
+  <div class="container">
+    <div class="filters" id="contracts-filters">
+      <button class="chip active" data-filter="all" onclick="filterContracts('all')">الكل</button>
+      <button class="chip" data-filter="active" onclick="filterContracts('active')">نشط</button>
+      <button class="chip" data-filter="completed" onclick="filterContracts('completed')">مكتمل</button>
+      <button class="chip" data-filter="late" onclick="filterContracts('late')">متأخر</button>
+    </div>
+    <div id="contracts-list"></div>
+  </div>
+</div>
+
+<!-- إنشاء عقد -->
+<div id="create-contract-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('contracts-screen')">←</button>
+    <span>إنشاء عقد جديد</span>
+  </div>
+  <div class="container">
+    <label class="label">الزبون</label>
+    <select id="cc-customer" class="input"></select>
+
+    <label class="label">المنتجات</label>
+    <div id="cc-items"></div>
+    <button class="btn btn-secondary" onclick="addItemDialog()">+ إضافة منتج</button>
+
+    <label class="label">السعر الإجمالي</label>
+    <input type="number" id="cc-total" class="input" placeholder="0" />
+
+    <label class="label">الدفعة الأولى</label>
+    <input type="number" id="cc-down" class="input" value="0" />
+
+    <label class="label">عدد الأقساط</label>
+    <input type="number" id="cc-count" class="input" placeholder="0" />
+
+    <label class="label">الدورية</label>
+    <select id="cc-frequency" class="input">
+      <option value="daily">يومي</option>
+      <option value="weekly">أسبوعي</option>
+      <option value="monthly" selected>شهري</option>
+      <option value="yearly">سنوي</option>
+    </select>
+
+    <label class="label">العملة</label>
+    <select id="cc-currency" class="input">
+      <option value="YER">ريال يمني</option>
+      <option value="SAR">ريال سعودي</option>
+      <option value="USD">دولار</option>
+    </select>
+
+    <label class="label">الضمانات</label>
+    <div id="cc-collaterals"></div>
+    <button class="btn btn-secondary" onclick="addCollateralDialog()">+ إضافة ضمانة</button>
+
+    <label class="label">الكفلاء</label>
+    <div id="cc-guarantors"></div>
+    <button class="btn btn-secondary" onclick="addGuarantorDialog()">+ إضافة كفيل</button>
+
+    <label class="label">ملاحظات</label>
+    <textarea id="cc-notes" class="input" rows="2"></textarea>
+
+    <p id="cc-error" class="error"></p>
+    <button class="btn btn-primary" onclick="saveContract()">حفظ العقد</button>
+  </div>
+</div>
+
+<!-- تفاصيل العقد -->
+<div id="contract-details-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('contracts-screen')">←</button>
+    <span id="cd-title">تفاصيل العقد</span>
+  </div>
+  <div class="container" id="cd-content"></div>
+</div>
+
+<!-- دفعة -->
+<div id="payment-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('contract-details-screen')">←</button>
+    <span>تسجيل دفعة</span>
+  </div>
+  <div class="container">
+    <p id="pay-info"></p>
+    <label class="label">المبلغ</label>
+    <input type="number" id="pay-amount" class="input" />
+    <label class="label">الطريقة</label>
+    <select id="pay-method" class="input">
+      <option value="cash">نقدي</option>
+      <option value="transfer">تحويل</option>
+    </select>
+    <label class="label">ملاحظات</label>
+    <textarea id="pay-notes" class="input" rows="2"></textarea>
+    <p id="pay-error" class="error"></p>
+    <button class="btn btn-primary" onclick="savePayment()">حفظ الدفعة</button>
+  </div>
+</div>
+
+<!-- الضمانات -->
+<div id="collaterals-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('merchant-dashboard')">←</button>
+    <span>الضمانات</span>
+  </div>
+  <div class="container" id="collaterals-list"></div>
+</div>
+
+<!-- التجار -->
+<div id="traders-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('merchant-dashboard')">←</button>
+    <span>التجار</span>
+    <button class="add-btn" onclick="addTraderDialog()">+</button>
+  </div>
+  <div class="container" id="traders-list"></div>
+</div>
+
+<!-- ============ لوحة الزبون ============ -->
+<div id="customer-dashboard" class="screen has-bottom-nav">
+  <div class="appbar">
+    <span id="customer-welcome">مرحبًا</span>
+    <button class="logout-btn" onclick="logout()">خروج</button>
+  </div>
+  <div class="container">
+    <div class="stats-grid stats-grid-3">
+      <div class="stat-card" onclick="openMyContracts()">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">عقودي</div>
+        <div class="stat-value" id="cust-contracts">0</div>
+      </div>
+      <div class="stat-card" onclick="openMyContracts()">
+        <div class="stat-icon">💰</div>
+        <div class="stat-label">المتبقي</div>
+        <div class="stat-value" id="cust-remaining">0</div>
+      </div>
+      <div class="stat-card" onclick="openCategoriesList()">
+        <div class="stat-icon">🛒</div>
+        <div class="stat-label">قائمة التقسيط</div>
+        <div class="stat-value">تصفح المجالات</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">الرئيسية</span>
+    </button>
+    <button class="nav-tab" onclick="openFileScreen()">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">الملف</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ شاشة قائمة التقسيط ============ -->
+<div id="categories-list-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('customer-dashboard')">←</button>
+    <span>قائمة التقسيط</span>
+  </div>
+  <div class="container">
+    <p style="text-align:center;font-size:13px;color:var(--gray-text);margin-bottom:16px;">
+      اختر المجال لعرض المقسطين
+    </p>
+    <div class="categories-grid">
+      <div class="category-card cat-phones" onclick="openCategoryMerchants('phones')">
+        <div class="category-icon">📱</div>
+        <div class="category-name">تقسيط جوالات</div>
+        <div class="category-count" id="cat-count-phones">0 مقسط</div>
+      </div>
+      <div class="category-card cat-systems" onclick="openCategoryMerchants('systems')">
+        <div class="category-icon">🖥️</div>
+        <div class="category-name">تقسيط منظومات</div>
+        <div class="category-count" id="cat-count-systems">0 مقسط</div>
+      </div>
+      <div class="category-card cat-ac" onclick="openCategoryMerchants('ac')">
+        <div class="category-icon">❄️</div>
+        <div class="category-name">تقسيط مكيفات</div>
+        <div class="category-count" id="cat-count-ac">0 مقسط</div>
+      </div>
+      <div class="category-card cat-cars" onclick="openCategoryMerchants('cars')">
+        <div class="category-icon">🚗</div>
+        <div class="category-name">تقسيط سيارات</div>
+        <div class="category-count" id="cat-count-cars">0 مقسط</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ شاشة مقسطو المجال ============ -->
+<div id="category-merchants-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('categories-list-screen')">←</button>
+    <span id="cm-title">المقسطون</span>
+  </div>
+  <div class="container">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="cm-search" class="search-input" placeholder="ابحث باسم المحل..." oninput="applyCategoryMerchantFilters()" />
+    </div>
+    <div class="filters">
+      <button class="chip active" data-cm="all" onclick="filterCategoryByDuration('all')">الكل</button>
+      <button class="chip" data-cm="daily" onclick="filterCategoryByDuration('daily')">يومي</button>
+      <button class="chip" data-cm="weekly" onclick="filterCategoryByDuration('weekly')">أسبوعي</button>
+      <button class="chip" data-cm="monthly" onclick="filterCategoryByDuration('monthly')">شهري</button>
+      <button class="chip" data-cm="yearly" onclick="filterCategoryByDuration('yearly')">سنوي</button>
+    </div>
+    <div id="category-merchants-list"></div>
+  </div>
+</div>
+
+<!-- تفاصيل المقسط (للعميل) -->
+<div id="merchant-details-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="goBackFromMerchantDetails()">←</button>
+    <span id="md-title">تفاصيل المقسط</span>
+  </div>
+  <div class="container" id="md-content"></div>
+</div>
+
+<!-- عقودي -->
+<div id="my-contracts-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('customer-dashboard')">←</button>
+    <span>عقودي</span>
+  </div>
+  <div class="container" id="my-contracts-list"></div>
+</div>
+
+<!-- ============ شاشة الملف (مشتركة) ============ -->
+<div id="file-screen" class="screen has-bottom-nav">
+  <div class="appbar">
+    <span>الملف الشخصي</span>
+  </div>
+  <div class="container">
+    <div class="file-header">
+      <div class="file-avatar" id="file-avatar">م</div>
+      <div class="file-name" id="file-name">مستخدم</div>
+      <div class="file-role-badge" id="file-role-badge">مقسط</div>
+    </div>
+
+    <div class="file-info" id="file-info"></div>
+
+    <div class="menu-list file-menu">
+      <div class="menu-item" onclick="openChangePasswordModal()">
+        <span>🔑 تغيير كلمة المرور</span>
+        <span class="menu-arrow">›</span>
+      </div>
+      <div class="menu-item" onclick="openPINSetupModal()">
+        <span>🔒 رمز الحماية (PIN)</span>
+        <span class="menu-arrow" id="pin-status-indicator"></span>
+      </div>
+      <div class="menu-item" onclick="openBiometricSetup()">
+        <span>👆 بصمة الإصبع</span>
+        <span class="menu-arrow" id="bio-status-indicator"></span>
+      </div>
+      <div class="menu-item danger-item" onclick="logout()">
+        <span>🚪 تسجيل الخروج</span>
+        <span class="menu-arrow">›</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab" onclick="goToHomeFromFile()">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">الرئيسية</span>
+    </button>
+    <button class="nav-tab active">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">الملف</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ لوحة الأدمن ============ -->
+<div id="admin-dashboard" class="screen has-bottom-nav">
+  <div class="appbar">
+    <span>لوحة الأدمن</span>
+    <button class="logout-btn" onclick="logout()">خروج</button>
+  </div>
+  <div class="container">
+    <div class="stats-grid stats-grid-3">
+      <div class="stat-card" onclick="openAdminMerchants()">
+        <div class="stat-icon">🏪</div>
+        <div class="stat-label">المقسطون</div>
+        <div class="stat-value" id="admin-merchants">0</div>
+      </div>
+      <div class="stat-card" onclick="openAdminCustomers()">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">الزبائن</div>
+        <div class="stat-value" id="admin-customers">0</div>
+      </div>
+      <div class="stat-card" onclick="openAdminContracts()">
+        <div class="stat-icon">📄</div>
+        <div class="stat-label">جميع العقود</div>
+        <div class="stat-value" id="admin-contracts">0</div>
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="toggleTheme()" style="margin-top:8px;">🌓 تبديل الثيم</button>
+  </div>
+
+  <div class="bottom-nav">
+    <button class="nav-tab active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">الرئيسية</span>
+    </button>
+    <button class="nav-tab" onclick="openFileScreen()">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">الملف</span>
+    </button>
+  </div>
+</div>
+
+<!-- شاشة المقسطين (الأدمن) -->
+<div id="admin-merchants-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('admin-dashboard')">←</button>
+    <span>المقسطون</span>
+  </div>
+  <div class="container" id="admin-merchants-list"></div>
+</div>
+
+<!-- شاشة الزبائن (الأدمن) -->
+<div id="admin-customers-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('admin-dashboard')">←</button>
+    <span>الزبائن</span>
+  </div>
+  <div class="container" id="admin-customers-list"></div>
+</div>
+
+<!-- شاشة العقود (الأدمن) -->
+<div id="admin-contracts-screen" class="screen">
+  <div class="appbar">
+    <button class="back-btn" onclick="showScreen('admin-dashboard')">←</button>
+    <span>جميع العقود</span>
+  </div>
+  <div class="container" id="admin-contracts-list"></div>
+</div>
+
+<!-- نافذة منبثقة عامة -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3 id="modal-title"></h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">إلغاء</button>
+      <button class="btn btn-primary" id="modal-save-btn">حفظ</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة PIN للدخول السريع -->
+<div id="pin-login-modal" class="modal pin-modal">
+  <div class="modal-content pin-content">
+    <h3>🔒 دخول سريع</h3>
+    <p id="pin-login-user" style="text-align:center;font-size:14px;color:var(--gray-text);margin-bottom:16px;"></p>
+    <input type="tel" id="pin-login-input" class="pin-input-field" maxlength="4" inputmode="numeric" placeholder="● ● ● ●" />
+    <p id="pin-login-error" class="error"></p>
+    <div class="pin-keypad" id="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key pin-key-empty"></button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key pin-key-del" onclick="pinKey('del')">⌫</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closePINLoginModal()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
